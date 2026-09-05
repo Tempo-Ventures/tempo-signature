@@ -1,73 +1,38 @@
-# Tempo signature — nastavení přes Gmail API
+# Nastavení podpisu přes Gmail API
 
-Plán, jak rozšířit `tempo-email-signature.html` o tlačítko "Nastavit v Gmailu", které podpis nahraje přímo přes API místo copy-pastu. Omezeno na doménu `tempo.ooo`.
+Na `tools.tempo.ooo` má stránka tlačítko **Set up in Gmail**: zapíše podpis rovnou
+do vybraných odesílacích adres uživatele. Na veřejné GitHub Pages verzi se tlačítko
+nezobrazuje, tam zůstává jen kopírování do schránky.
 
-## Architektura
+## Jak to funguje
 
-- **Browser-side flow** — uživatel klikne tlačítko, projde Google OAuth v prohlížeči, JS zavolá `gmail.users.settings.sendAs.update` s vygenerovaným HTML podpisem.
-- **Endpoint:** `PUT https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs/{sendAsEmail}`
-- **OAuth scope:** `https://www.googleapis.com/auth/gmail.settings.basic`
+1. Stránka se zeptá `/oauth2/userinfo` (endpoint oauth2-proxy) na přihlášený účet.
+   Když odpověď nepřijde, přihlašovací část stránky se vůbec nezobrazí.
+2. Kliknutí na tlačítko vyžádá přes Google Identity Services token se scope
+   `https://www.googleapis.com/auth/gmail.settings.basic`. Účet je předvybraný
+   z bodu 1, takže se člověk znovu nepřihlašuje; poprvé jen odklikne oprávnění.
+3. `GET users/me/settings/sendAs` vrátí adresy. Při jediné adrese se podpis zapíše
+   rovnou, při více se nabídne výběr.
+4. `PATCH users/me/settings/sendAs/{adresa}` zapíše pole `signature`.
 
-### Háček s logem
+Token žije jen v paměti stránky, nikam se neukládá.
 
-Gmail v API podpisu nepřijme `data:image/...;base64` (strippuje se). Před nasazením musí být logo hostované na veřejné URL (GCS bucket — viz hint v `tempo-email-signature.html` ř. 267-275).
+## Co je potřeba v Google Cloud
 
-## Omezení na doménu tempo.ooo
+Projekt `infrastructure-489410` (org tempo.ooo), consent screen Internal — restricted
+scope `gmail.settings.basic` proto nepotřebuje ověření aplikace.
 
-Dvě vrstvy, které jdou kombinovat:
+- Gmail API: zapnuté (`gcloud services enable gmail.googleapis.com --project=infrastructure-489410`).
+- OAuth client: **sdílený s oauth2-proxy** (viz `tempo-infrastructure-management`,
+  `docs/2026-08-10-ochrana-status-tempo-ooo.md`). V Console mu musí být mezi
+  *Authorized JavaScript origins* přidáno `https://tools.tempo.ooo`. CLI to neumí —
+  `gcloud iap oauth-clients` se vypíná 19. 3. 2026 a JS origins nenastavuje,
+  `gcloud iam oauth-clients` je Workforce Identity Federation.
+- Client ID patří do konstanty `GOOGLE_CLIENT_ID` v `index.html`. Je to veřejná
+  hodnota, client secret stránka nepoužívá. Dokud je konstanta prázdná, tlačítko se
+  nezobrazí.
 
-### 1. Internal OAuth client (Google to vyřeší)
+## Co API neumí
 
-OAuth consent screen nastavený jako **Internal User Type** — Google sám odmítne externí účty mimo Workspace organizaci tempo.ooo.
-
-### 2. Doménový check v JS (skutečná pojistka)
-
-Po přihlášení ověřit `hd` claim v ID tokenu:
-
-```js
-const payload = JSON.parse(atob(idToken.split('.')[1]));
-if (payload.hd !== 'tempo.ooo') {
-  alert('Jen pro tempo.ooo');
-  return;
-}
-```
-
-Volitelná třetí vrstva (`hd=tempo.ooo` parametr v OAuth requestu) slouží jen jako UX hint, není to bezpečnostní bariéra.
-
-## Setup v Google Cloud
-
-Co jde přes `gcloud` CLI:
-
-```bash
-gcloud projects create tempo-signature
-gcloud config set project tempo-signature
-gcloud services enable gmail.googleapis.com
-gcloud iap oauth-brands create \
-  --application_title="Tempo Signature" \
-  --support_email=honza@tempo.ooo
-gcloud iap oauth-clients create BRAND_ID \
-  --display_name="Tempo Signature Web"
-```
-
-**Co `gcloud` neumí** (musí se doklikat v Console UI, ~2 min):
-- Authorized JavaScript origins
-- Authorized redirect URIs
-
-`gcloud iap oauth-clients` vytváří client primárně pro Identity-Aware Proxy. Client ID/secret jdou použít i pro normální web OAuth, ale origins/redirects se přes CLI nedají nastavit.
-
-Alternativa: Terraform `google_iap_client` resource — overkill pro jeden client.
-
-## Odhad práce na kódu
-
-50-80 řádků JS k tomu, co už je v `tempo-email-signature.html`:
-- Google Identity Services script tag
-- Tlačítko "Nastavit v Gmailu"
-- OAuth flow (token client)
-- Doménový check z ID tokenu
-- `fetch` na Gmail API endpoint s vygenerovaným podpisem
-
-## Otevřené otázky
-
-- Kde bude stránka hostovaná? (Origin pro OAuth client.)
-- Kam nahrát logo? (GCS bucket — název? veřejný přístup?)
-- Existuje už nějaký Google Cloud projekt pod tempo.ooo, nebo zakládat nový?
+Zaškrtávátko „Insert signature before the quoted text in replies" Gmail Settings API
+nevystavuje. Zůstává v ručních instrukcích na stránce.

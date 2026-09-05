@@ -2,247 +2,294 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tempo — Email Signature Generator</title>
 <meta name="description" content="Vygeneruj si podpis do Gmailu ve značce Tempo – vyplň údaje, zkopíruj, vlož.">
 <meta name="tool-icon" content="✉️">
+<link rel="stylesheet" href="https://storybook.tempo.ooo/tempo.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
-  :root {
-    --tempo-blue: #044BAF;
-    --ink: #111827;
-    --muted: #6B7280;
-    --line: #E5E7EB;
-    --bg: #F8FAFC;
-    --accent: #044BAF;
-    --ok: #16A34A;
-  }
-  * { box-sizing: border-box; }
-  html, body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--ink);
-    background: var(--bg);
-  }
-  .page {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-  }
-  h1 {
-    font-size: 26px;
-    margin: 0 0 6px;
-    color: var(--tempo-blue);
-  }
-  .subtitle {
-    color: var(--muted);
-    margin: 0 0 28px;
-    font-size: 15px;
-  }
-  .card {
-    background: #fff;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 2px rgba(16,24,40,0.04);
-  }
-  .card h2 {
-    margin: 0 0 14px;
-    font-size: 15px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--muted);
-    font-weight: 600;
-  }
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 18px;
-  }
-  label {
-    display: block;
-    font-size: 13px;
-    color: var(--muted);
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
-  input[type="text"], input[type="email"], input[type="tel"] {
-    width: 100%;
-    padding: 10px 12px;
-    font-size: 14px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: #fff;
-    font-family: inherit;
-    color: var(--ink);
-    transition: border 0.15s, box-shadow 0.15s;
-  }
-  input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(4,75,175,0.15);
-  }
-  input.warn {
-    border-color: #D97706;
-    background: #FFFBEB;
-  }
-  input.warn:focus {
-    border-color: #D97706;
-    box-shadow: 0 0 0 3px rgba(217,119,6,0.15);
-  }
-  .field-warning {
-    font-size: 12px;
-    color: #D97706;
-    margin-top: 4px;
-    display: none;
-  }
-  .field-warning.show { display: block; }
-  .preview-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .preview-wrap {
-    border: 1px dashed var(--line);
-    border-radius: 8px;
-    padding: 22px;
-    background: #fff;
-    position: relative;
-  }
-  .preview-wrap--dark {
-    background: #202124;   /* approximates Gmail mobile dark */
-    border-color: #333;
-  }
-  .preview-wrap--dark #signature-dark-preview,
-  .preview-wrap--dark #signature-dark-preview * {
-    color: #E8EAED !important;
-  }
-  .preview-wrap--dark #signature-dark-preview a {
-    /* keep brand color on links in dark preview too — that's what Gmail will actually render */
-    color: #044BAF !important;
-  }
-  .preview-tag {
-    position: absolute;
-    top: 8px; right: 10px;
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: var(--muted);
-  }
-  .preview-wrap--dark .preview-tag { color: #9AA0A6; }
-  @media (max-width: 720px) {
-    .preview-grid { grid-template-columns: 1fr; }
-  }
-  .actions {
-    margin-top: 18px;
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-  button {
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.05s;
-  }
-  .btn-primary {
-    background: var(--tempo-blue);
-    color: #fff;
-  }
-  .btn-primary:hover { background: #033A88; }
-  .btn-primary:active { transform: translateY(1px); }
-  .btn-secondary {
-    background: #fff;
-    color: var(--ink);
-    border: 1px solid var(--line);
-  }
-  .btn-secondary:hover { background: #F3F4F6; }
-  .status {
-    font-size: 13px;
-    color: var(--ok);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .status.show { opacity: 1; }
+  /* Page styles live in @layer components so tempo.css utilities still win over them.
+     Radius is not exposed as a custom property — it comes from the rounded-* utility
+     classes in the markup (buttons/inputs 2px, cards 8px). */
+  @layer components {
+    body { background: var(--muted); }
 
-  /* ===== Signature styles (inline-friendly) ===== */
-  /* The markup in #signature is intentionally table-based + inline style
-     so it survives Gmail's signature editor. */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      height: 56px;
+      padding: 0 24px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar a {
+      font-family: var(--font-heading);
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-medium);
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .topbar a:hover { text-decoration: underline; }
+    .topbar .who { font-size: var(--text-xs); color: var(--muted-foreground); }
 
-  ol.steps {
-    margin: 0;
-    padding-left: 20px;
-    color: var(--ink);
-    font-size: 14px;
-    line-height: 1.7;
-  }
-  ol.steps li { margin-bottom: 4px; }
-  code {
-    background: #F3F4F6;
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 1px 6px;
-    font-size: 13px;
-  }
-  .hint {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 8px;
-  }
-  @media (max-width: 640px) {
-    .grid { grid-template-columns: 1fr; }
+    .page {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-semibold);
+      letter-spacing: -0.01em;
+      margin: 0 0 6px;
+    }
+    .subtitle {
+      font-size: var(--text-sm);
+      color: var(--muted-foreground);
+      margin: 0 0 28px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .card h2 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-semibold);
+      margin: 0 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .card h3 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-semibold);
+      margin: 0 0 10px;
+    }
+    .card h3 + ol.steps { margin-bottom: 22px; }
+    .card ol.steps + h3 { margin-top: 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 18px;
+    }
+    label {
+      display: block;
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-medium);
+      color: var(--muted-foreground);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="email"], input[type="tel"] {
+      width: 100%;
+      padding: 9px 12px;
+      font-family: inherit;
+      font-size: var(--text-sm);
+      color: var(--foreground);
+      background: var(--background);
+      border: 1px solid var(--input);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 20%, transparent);
+    }
+    input.warn {
+      border-color: var(--tone-warning-border);
+      background: var(--tone-warning-surface);
+    }
+    input.warn:focus {
+      border-color: var(--tone-warning-border);
+      box-shadow: 0 0 0 3px var(--tone-warning-surface);
+    }
+    .field-warning {
+      display: none;
+      font-size: var(--text-xs);
+      color: var(--tone-warning-fg);
+      margin-top: 4px;
+    }
+    .field-warning.show { display: block; }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .preview-wrap {
+      position: relative;
+      padding: 22px;
+      background: var(--background);
+      border: 1px dashed var(--border);
+    }
+    .preview-wrap--dark {
+      /* Fixed colours on purpose: this mirrors Gmail's mobile dark theme, not our palette. */
+      background: #202124;
+      border-color: #333;
+    }
+    .preview-wrap--dark #signature-dark-preview,
+    .preview-wrap--dark #signature-dark-preview * { color: #E8EAED !important; }
+    .preview-wrap--dark #signature-dark-preview a { color: #044BAF !important; }
+    .preview-tag {
+      position: absolute;
+      top: 8px; right: 10px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: var(--font-weight-semibold);
+      color: var(--muted-foreground);
+    }
+    .preview-wrap--dark .preview-tag { color: #9AA0A6; }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn {
+      font-family: inherit;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-semibold);
+      padding: 10px 16px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s, filter 0.15s;
+    }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+    .btn-primary:hover:not(:disabled) { filter: brightness(1.15); }
+    .btn-secondary {
+      background: var(--background);
+      color: var(--foreground);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--muted); }
+
+    .status {
+      font-size: var(--text-xs);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .status.show { opacity: 1; }
+    .status[data-tone="ok"] { color: var(--tone-success-fg); }
+    .status[data-tone="warning"] { color: var(--tone-warning-fg); }
+    .status[data-tone="danger"] { color: var(--tone-danger-fg); }
+
+    .picker {
+      margin-top: 18px;
+      padding: 16px;
+      background: var(--background);
+      border: 1px solid var(--border);
+    }
+    .picker p {
+      margin: 0 0 10px;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-medium);
+    }
+    .picker .addr {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: var(--text-sm);
+      margin-bottom: 6px;
+    }
+    .picker .addr input { accent-color: var(--primary); }
+
+    ol.steps {
+      /* tempo.css carries Tailwind's preflight, which strips list markers */
+      list-style: decimal;
+      margin: 0;
+      padding-left: 20px;
+      font-size: var(--text-sm);
+      line-height: 1.7;
+    }
+    ol.steps li { margin-bottom: 4px; }
+    code {
+      background: var(--muted);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      font-size: var(--text-xs);
+    }
+    .hint {
+      font-size: var(--text-xs);
+      color: var(--muted-foreground);
+      margin: 8px 0 0;
+    }
+    .lead {
+      margin: 0 0 14px;
+      font-size: var(--text-sm);
+    }
+
+    @media (max-width: 720px) {
+      .preview-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
   }
 </style>
 </head>
 <body>
+
+<header class="topbar" id="topbar" hidden>
+  <a href="/">← Tempo Tools</a>
+  <span class="who" id="who"></span>
+</header>
+
 <div class="page">
 
   <h1>Tempo — email signature</h1>
-  <p class="subtitle">Fill in your details, click <strong>Copy signature</strong>, then paste into Gmail.</p>
+  <p class="subtitle">Fill in your details, then let the page set the signature in Gmail for you — or copy it and paste it yourself.</p>
 
   <!-- ========= FORM ========= -->
-  <section class="card">
+  <section class="card rounded-lg">
     <h2>1. Your details</h2>
     <div class="grid">
       <div>
         <label for="f-name">Full name</label>
-        <input id="f-name" type="text" placeholder="Jana Nováková" autocomplete="name">
+        <input id="f-name" class="rounded-md" type="text" placeholder="Jana Nováková" autocomplete="name">
         <div class="field-warning" id="warn-name">⚠ Are you sure the name is correct?</div>
       </div>
       <div>
         <label for="f-title">Job title</label>
-        <input id="f-title" type="text" placeholder="Business Designer">
+        <input id="f-title" class="rounded-md" type="text" placeholder="Business Designer">
         <div class="field-warning" id="warn-title">⚠ Are you sure the job title is correct?</div>
       </div>
       <div>
         <label for="f-email">Email</label>
-        <input id="f-email" type="email" placeholder="jana.novakova@tempo.ooo" autocomplete="email">
+        <input id="f-email" class="rounded-md" type="email" placeholder="jana.novakova@tempo.ooo" autocomplete="email">
         <div class="field-warning" id="warn-email">⚠ Are you sure the email address is correct?</div>
       </div>
       <div>
         <label for="f-phone">Phone</label>
-        <input id="f-phone" type="tel" placeholder="+420 123 456 789" autocomplete="tel">
+        <input id="f-phone" class="rounded-md" type="tel" placeholder="+420 123 456 789" autocomplete="tel">
         <div class="field-warning" id="warn-phone">⚠ Please use international format, e.g. +420 123 456 789</div>
       </div>
       <div style="grid-column: 1 / -1;">
-        <label for="f-linkedin">LinkedIn URL <span style="font-weight:400;color:#9CA3AF;">(optional)</span></label>
-        <input id="f-linkedin" type="text" placeholder="https://linkedin.com/in/jana-novakova">
+        <label for="f-linkedin">LinkedIn URL <span style="font-weight:400;opacity:0.7;">(optional)</span></label>
+        <input id="f-linkedin" class="rounded-md" type="text" placeholder="https://linkedin.com/in/jana-novakova">
         <div class="field-warning" id="warn-linkedin">⚠ Are you sure this is a valid LinkedIn URL?</div>
       </div>
     </div>
   </section>
 
   <!-- ========= PREVIEW ========= -->
-  <section class="card">
+  <section class="card rounded-lg">
     <h2>2. Preview</h2>
     <div class="preview-grid">
-    <div class="preview-wrap">
+    <div class="preview-wrap rounded-lg">
       <span class="preview-tag">Light Gmail</span>
       <!-- ★ This is the block that gets copied ★ -->
       <div id="signature">
@@ -277,7 +324,7 @@
       <!-- ★ end of signature block ★ -->
     </div>
 
-    <div class="preview-wrap preview-wrap--dark">
+    <div class="preview-wrap preview-wrap--dark rounded-lg">
       <span class="preview-tag">Dark Gmail</span>
       <!-- Mirror of #signature, populated by render() — not the source copied to clipboard -->
       <div id="signature-dark-preview" aria-hidden="true"></div>
@@ -285,9 +332,16 @@
     </div>
 
     <div class="actions">
-      <button class="btn-primary" id="btn-copy">Copy signature</button>
-      <button class="btn-secondary" id="btn-copy-html">Copy as HTML source</button>
-      <span id="status" class="status">✔ Copied — now paste it into Gmail</span>
+      <button class="btn btn-primary rounded-md" id="btn-gmail" hidden>Set up in Gmail</button>
+      <button class="btn btn-primary rounded-md" id="btn-copy">Copy signature</button>
+      <button class="btn btn-secondary rounded-md" id="btn-copy-html">Copy as HTML source</button>
+      <span id="status" class="status" data-tone="ok">✔ Copied — now paste it into Gmail</span>
+    </div>
+
+    <div class="picker rounded-lg" id="picker" hidden>
+      <p>Which addresses should get this signature?</p>
+      <div id="picker-list"></div>
+      <button class="btn btn-primary rounded-md" id="btn-apply" style="margin-top:10px;">Save to selected</button>
     </div>
 
     <p class="hint">
@@ -296,8 +350,21 @@
   </section>
 
   <!-- ========= INSTRUCTIONS ========= -->
-  <section class="card">
+  <section class="card rounded-lg">
     <h2>3. Install in Gmail (Google Workspace)</h2>
+    <div id="how-api" hidden>
+      <h3>Straight from this page</h3>
+      <ol class="steps">
+        <li>Fill in the form above and check the preview.</li>
+        <li>Click <strong>Set up in Gmail</strong>. Google asks once for permission to edit your Gmail settings. If you send from more than one address, tick the ones that should get the signature and click <strong>Save to selected</strong>.</li>
+        <li>In Gmail, click the ⚙️ gear (top-right) → <strong>See all settings</strong> and scroll to <strong>Signature</strong> on the <strong>General</strong> tab. The signature is already there — nothing to paste.</li>
+        <li>Tick the checkbox <strong>"Insert signature before the quoted text in replies, and remove the '--' line that precedes it."</strong> This is the one setting Gmail's API can't touch.</li>
+        <li>Check that <strong>Signature defaults</strong> point to it — both <em>For new emails use</em> and <em>On reply/forward use</em>.</li>
+        <li>Scroll to the bottom, click <strong>Save Changes</strong>, and send yourself a test email.</li>
+      </ol>
+    </div>
+
+    <h3 id="how-manual-title" hidden>Or paste it in yourself</h3>
     <ol class="steps">
       <li>Click <strong>Copy signature</strong> above.</li>
       <li>In Gmail, click the ⚙️ gear (top-right) → <strong>See all settings</strong>.</li>
@@ -316,6 +383,7 @@
 
 </div>
 
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
   // --- Live preview wiring ---
   const $ = (id) => document.getElementById(id);
@@ -434,11 +502,12 @@
 
   // --- Copy helpers ---
   const status = $("status");
-  function flashStatus(msg) {
+  function flashStatus(msg, tone = "ok", ms = 2200) {
     status.textContent = msg;
+    status.dataset.tone = tone;
     status.classList.add("show");
     clearTimeout(flashStatus._t);
-    flashStatus._t = setTimeout(() => status.classList.remove("show"), 2200);
+    flashStatus._t = setTimeout(() => status.classList.remove("show"), ms);
   }
 
   // Copy the rendered signature as rich HTML (what Gmail wants)
@@ -467,7 +536,7 @@
       flashStatus("✔ Copied — now paste it into Gmail");
     } catch (err) {
       console.error(err);
-      flashStatus("⚠ Couldn't copy automatically — select the preview above and press Ctrl/⌘+C");
+      flashStatus("⚠ Couldn't copy automatically — select the preview above and press Ctrl/⌘+C", "warning", 4000);
     }
   });
 
@@ -478,7 +547,206 @@
       await navigator.clipboard.writeText(html);
       flashStatus("✔ HTML source copied");
     } catch (e) {
-      flashStatus("⚠ Couldn't copy HTML");
+      flashStatus("⚠ Couldn't copy HTML", "danger");
+    }
+  });
+
+  // ===== Gmail API path =====
+  // Only live behind oauth2-proxy on tools.tempo.ooo. On GitHub Pages /oauth2/userinfo
+  // does not exist, the probe fails, and the page stays copy-and-paste only.
+
+  // OAuth client shared with oauth2-proxy (project infrastructure-489410). Public value.
+  const GOOGLE_CLIENT_ID = "407577016381-6jpl6p6tp6pn9tr13jkebvsjvfgt2a3d.apps.googleusercontent.com";
+  const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.settings.basic";
+  const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me/settings/";
+
+  const btnGmail = $("btn-gmail");
+  const btnCopy  = $("btn-copy");
+  const picker     = $("picker");
+  const pickerList = $("picker-list");
+
+  let session = null;       // { email } from oauth2-proxy
+  let accessToken = null;   // in memory only, never stored
+  let tokenClient = null;
+  let pendingToken = null;
+
+  async function probeSession() {
+    try {
+      const r = await fetch("/oauth2/userinfo", {
+        credentials: "same-origin",
+        headers: { Accept: "application/json" }
+      });
+      if (!r.ok) return null;
+      if (!(r.headers.get("content-type") || "").includes("application/json")) return null;
+      const data = await r.json();
+      return data && data.email ? { email: data.email } : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function getTokenClient() {
+    if (tokenClient) return tokenClient;
+    if (!(window.google && google.accounts && google.accounts.oauth2)) return null;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GMAIL_SCOPE,
+      callback: (resp) => {
+        if (!pendingToken) return;
+        const { resolve, reject } = pendingToken;
+        pendingToken = null;
+        if (resp.error) reject(new Error(resp.error_description || resp.error));
+        else { accessToken = resp.access_token; resolve(accessToken); }
+      },
+      error_callback: (err) => {
+        if (!pendingToken) return;
+        const { reject } = pendingToken;
+        pendingToken = null;
+        reject(new Error(err && err.type === "popup_closed"
+          ? "Permission window closed"
+          : "Couldn't open the Google permission window"));
+      }
+    });
+    return tokenClient;
+  }
+
+  function requestToken() {
+    return new Promise((resolve, reject) => {
+      const client = getTokenClient();
+      if (!client) return reject(new Error("Google script didn't load"));
+      pendingToken = { resolve, reject };
+      // hint preselects the account we are already signed in as; prompt "" skips the
+      // consent screen once the permission has been granted.
+      client.requestAccessToken({ hint: session.email, prompt: "" });
+    });
+  }
+
+  async function gmail(path, init = {}) {
+    const r = await fetch(GMAIL_API + path, {
+      ...init,
+      headers: {
+        Authorization: "Bearer " + accessToken,
+        "Content-Type": "application/json",
+        ...(init.headers || {})
+      }
+    });
+    if (!r.ok) {
+      let msg = r.status + " " + r.statusText;
+      try {
+        const body = await r.json();
+        if (body && body.error && body.error.message) msg = body.error.message;
+      } catch (e) { /* keep the status line */ }
+      throw new Error(msg);
+    }
+    return r.json();
+  }
+
+  // The signature exactly as it is copied, minus the elements render() hid (an empty
+  // LinkedIn link) and minus the ids, which have no meaning outside this page.
+  function signatureForGmail() {
+    const clone = $("signature").cloneNode(true);
+    clone.querySelectorAll('[style*="display:none"], [style*="display: none"]').forEach(el => el.remove());
+    clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+    return clone.innerHTML;
+  }
+
+  function missingFields() {
+    return [
+      [fName, "full name"],
+      [fTitle, "job title"],
+      [fEmail, "email"],
+      [fPhone, "phone"]
+    ].filter(([el]) => !el.value.trim()).map(([, label]) => label);
+  }
+
+  function renderPicker(addresses) {
+    pickerList.innerHTML = "";
+    for (const a of addresses) {
+      const id = "addr-" + a.sendAsEmail.replace(/[^a-z0-9]/gi, "-");
+      const row = document.createElement("label");
+      row.className = "addr";
+      row.htmlFor = id;
+      const box = document.createElement("input");
+      box.type = "checkbox";
+      box.id = id;
+      box.value = a.sendAsEmail;
+      box.checked = !!a.isPrimary;
+      row.append(box, document.createTextNode(a.sendAsEmail + (a.isPrimary ? " (primary)" : "")));
+      pickerList.append(row);
+    }
+    picker.hidden = false;
+  }
+
+  async function applyTo(addresses) {
+    const signature = signatureForGmail();
+    for (const address of addresses) {
+      await gmail("sendAs/" + encodeURIComponent(address), {
+        method: "PATCH",
+        body: JSON.stringify({ signature })
+      });
+    }
+    flashStatus("✔ Signature saved for " + addresses.join(", "), "ok", 6000);
+  }
+
+  async function withButton(button, label, fn) {
+    const original = button.textContent;
+    button.disabled = true;
+    button.textContent = label;
+    try {
+      await fn();
+    } catch (err) {
+      console.error(err);
+      flashStatus("⚠ " + err.message, "danger", 6000);
+    } finally {
+      button.disabled = false;
+      button.textContent = original;
+    }
+  }
+
+  btnGmail.addEventListener("click", () => withButton(btnGmail, "Working…", async () => {
+    await requestToken();
+
+    const list = await gmail("sendAs");
+    const addresses = (list.sendAs || []).filter(a => a.isPrimary || a.verificationStatus === "accepted");
+    if (!addresses.length) throw new Error("No send-as address found on this account");
+
+    // Fill in what Gmail already knows, without overwriting anything typed by hand.
+    const primary = addresses.find(a => a.isPrimary) || addresses[0];
+    if (!fEmail.value.trim()) fEmail.value = primary.sendAsEmail;
+    if (!fName.value.trim() && primary.displayName) fName.value = primary.displayName;
+    render();
+
+    const missing = missingFields();
+    if (missing.length) {
+      flashStatus("⚠ Fill in " + missing.join(", ") + ", then click again", "warning", 6000);
+      return;
+    }
+
+    if (addresses.length === 1) await applyTo([addresses[0].sendAsEmail]);
+    else renderPicker(addresses);
+  }));
+
+  $("btn-apply").addEventListener("click", () => withButton($("btn-apply"), "Saving…", async () => {
+    const chosen = [...pickerList.querySelectorAll("input:checked")].map(el => el.value);
+    if (!chosen.length) {
+      flashStatus("⚠ Pick at least one address", "warning", 4000);
+      return;
+    }
+    await applyTo(chosen);
+    picker.hidden = true;
+  }));
+
+  probeSession().then(found => {
+    if (!found) return;
+    session = found;
+    $("who").textContent = "Signed in as " + found.email;
+    $("topbar").hidden = false;
+    if (!fEmail.value.trim()) { fEmail.value = found.email; render(); }
+    if (GOOGLE_CLIENT_ID) {
+      btnGmail.hidden = false;
+      btnCopy.className = "btn btn-secondary rounded-md";
+      $("how-api").hidden = false;
+      $("how-manual-title").hidden = false;
     }
   });
 </script>
