@@ -10,12 +10,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<script>
+  if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) document.documentElement.classList.add("dark");
+</script>
 <style>
   /* Page styles live in @layer components so tempo.css utilities still win over them.
      Radius is not exposed as a custom property — it comes from the rounded-* utility
      classes in the markup (buttons/inputs 2px, cards 8px). */
   @layer components {
-    body { background: var(--muted); }
+    body { background: var(--background); }
 
     .topbar {
       display: flex;
@@ -126,7 +129,9 @@
     .preview-wrap {
       position: relative;
       padding: 22px;
-      background: var(--background);
+      /* Both previews are pinned to Gmail's own themes, not to the page theme —
+         the point is to show what the mail client renders. */
+      background: #ffffff;
       border: 1px dashed var(--border);
     }
     .preview-wrap--dark {
@@ -144,7 +149,7 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       font-weight: var(--font-weight-semibold);
-      color: var(--muted-foreground);
+      color: #6B7280;
     }
     .preview-wrap--dark .preview-tag { color: #9AA0A6; }
 
@@ -190,7 +195,7 @@
     .picker {
       margin-top: 18px;
       padding: 16px;
-      background: var(--background);
+      background: var(--muted);
       border: 1px solid var(--border);
     }
     .picker p {
