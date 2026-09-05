@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tempo — Email Signature Generator</title>
+<meta name="description" content="Vygeneruj si podpis do Gmailu ve značce Tempo – vyplň údaje, zkopíruj, vlož.">
+<meta name="tool-icon" content="✉️">
+<style>
+  :root {
+    --tempo-blue: #044BAF;
+    --ink: #111827;
+    --muted: #6B7280;
+    --line: #E5E7EB;
+    --bg: #F8FAFC;
+    --accent: #044BAF;
+    --ok: #16A34A;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  .page {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  h1 {
+    font-size: 26px;
+    margin: 0 0 6px;
+    color: var(--tempo-blue);
+  }
+  .subtitle {
+    color: var(--muted);
+    margin: 0 0 28px;
+    font-size: 15px;
+  }
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.04);
+  }
+  .card h2 {
+    margin: 0 0 14px;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  input[type="text"], input[type="email"], input[type="tel"] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    font-family: inherit;
+    color: var(--ink);
+    transition: border 0.15s, box-shadow 0.15s;
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(4,75,175,0.15);
+  }
+  input.warn {
+    border-color: #D97706;
+    background: #FFFBEB;
+  }
+  input.warn:focus {
+    border-color: #D97706;
+    box-shadow: 0 0 0 3px rgba(217,119,6,0.15);
+  }
+  .field-warning {
+    font-size: 12px;
+    color: #D97706;
+    margin-top: 4px;
+    display: none;
+  }
+  .field-warning.show { display: block; }
+  .preview-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .preview-wrap {
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 22px;
+    background: #fff;
+    position: relative;
+  }
+  .preview-wrap--dark {
+    background: #202124;   /* approximates Gmail mobile dark */
+    border-color: #333;
+  }
+  .preview-wrap--dark #signature-dark-preview,
+  .preview-wrap--dark #signature-dark-preview * {
+    color: #E8EAED !important;
+  }
+  .preview-wrap--dark #signature-dark-preview a {
+    /* keep brand color on links in dark preview too — that's what Gmail will actually render */
+    color: #044BAF !important;
+  }
+  .preview-tag {
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .preview-wrap--dark .preview-tag { color: #9AA0A6; }
+  @media (max-width: 720px) {
+    .preview-grid { grid-template-columns: 1fr; }
+  }
+  .actions {
+    margin-top: 18px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.05s;
+  }
+  .btn-primary {
+    background: var(--tempo-blue);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #033A88; }
+  .btn-primary:active { transform: translateY(1px); }
+  .btn-secondary {
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-secondary:hover { background: #F3F4F6; }
+  .status {
+    font-size: 13px;
+    color: var(--ok);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .status.show { opacity: 1; }
+
+  /* ===== Signature styles (inline-friendly) ===== */
+  /* The markup in #signature is intentionally table-based + inline style
+     so it survives Gmail's signature editor. */
+
+  ol.steps {
+    margin: 0;
+    padding-left: 20px;
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  ol.steps li { margin-bottom: 4px; }
+  code {
+    background: #F3F4F6;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 13px;
+  }
+  .hint {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Tempo — email signature</h1>
+  <p class="subtitle">Fill in your details, click <strong>Copy signature</strong>, then paste into Gmail.</p>
+
+  <!-- ========= FORM ========= -->
+  <section class="card">
+    <h2>1. Your details</h2>
+    <div class="grid">
+      <div>
+        <label for="f-name">Full name</label>
+        <input id="f-name" type="text" placeholder="Jana Nováková" autocomplete="name">
+        <div class="field-warning" id="warn-name">⚠ Are you sure the name is correct?</div>
+      </div>
+      <div>
+        <label for="f-title">Job title</label>
+        <input id="f-title" type="text" placeholder="Business Designer">
+        <div class="field-warning" id="warn-title">⚠ Are you sure the job title is correct?</div>
+      </div>
+      <div>
+        <label for="f-email">Email</label>
+        <input id="f-email" type="email" placeholder="jana.novakova@tempo.ooo" autocomplete="email">
+        <div class="field-warning" id="warn-email">⚠ Are you sure the email address is correct?</div>
+      </div>
+      <div>
+        <label for="f-phone">Phone</label>
+        <input id="f-phone" type="tel" placeholder="+420 123 456 789" autocomplete="tel">
+        <div class="field-warning" id="warn-phone">⚠ Please use international format, e.g. +420 123 456 789</div>
+      </div>
+      <div style="grid-column: 1 / -1;">
+        <label for="f-linkedin">LinkedIn URL <span style="font-weight:400;color:#9CA3AF;">(optional)</span></label>
+        <input id="f-linkedin" type="text" placeholder="https://linkedin.com/in/jana-novakova">
+        <div class="field-warning" id="warn-linkedin">⚠ Are you sure this is a valid LinkedIn URL?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========= PREVIEW ========= -->
+  <section class="card">
+    <h2>2. Preview</h2>
+    <div class="preview-grid">
+    <div class="preview-wrap">
+      <span class="preview-tag">Light Gmail</span>
+      <!-- ★ This is the block that gets copied ★ -->
+      <div id="signature">
+        <table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;color:#111111;">
+          <tr>
+            <!-- Logo cell -->
+            <td style="vertical-align:middle;padding:0 20px 0 0;">
+              <img id="sig-logo"
+                   src="https://storage.googleapis.com/tempo-shared-media/tempo-logo-badge.png"
+                   alt="Tempo"
+                   width="90"
+                   height="90"
+                   style="display:block;border:0;outline:none;text-decoration:none;width:90px;height:auto;">
+            </td>
+            <!-- Text cell -->
+            <td style="vertical-align:middle;padding:0 0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.3;color:#111111;">
+              <div id="sig-name"  style="font-weight:bold;font-size:15px;color:#000000;">Jan Jelínek</div>
+              <div id="sig-title" style="font-size:14px;color:#111111;">Business Designer</div>
+              <div id="sig-email-row" style="font-size:14px;color:#111111;">
+                <span id="sig-email">jan.jelinek@tempo.ooo</span>
+              </div>
+              <div id="sig-phone-row" style="font-size:14px;color:#111111;">+420 739 667 010</div>
+              <div style="font-size:14px;margin-top:2px;">
+                <a id="sig-linkedin" href="https://www.linkedin.com/" style="color:#044BAF;text-decoration:underline;display:none;">LinkedIn</a>
+                <span id="sig-linkedin-sep" style="color:#6B7280;display:none;"> | </span>
+                <a href="https://www.tempo.ooo" style="color:#044BAF;text-decoration:underline;">www.tempo.ooo</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <!-- ★ end of signature block ★ -->
+    </div>
+
+    <div class="preview-wrap preview-wrap--dark">
+      <span class="preview-tag">Dark Gmail</span>
+      <!-- Mirror of #signature, populated by render() — not the source copied to clipboard -->
+      <div id="signature-dark-preview" aria-hidden="true"></div>
+    </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="btn-copy">Copy signature</button>
+      <button class="btn-secondary" id="btn-copy-html">Copy as HTML source</button>
+      <span id="status" class="status">✔ Copied — now paste it into Gmail</span>
+    </div>
+
+    <p class="hint">
+      Logo is served from <code>https://storage.googleapis.com/tempo-shared-media/tempo-logo-badge.png</code> — no further setup needed.
+    </p>
+  </section>
+
+  <!-- ========= INSTRUCTIONS ========= -->
+  <section class="card">
+    <h2>3. Install in Gmail (Google Workspace)</h2>
+    <ol class="steps">
+      <li>Click <strong>Copy signature</strong> above.</li>
+      <li>In Gmail, click the ⚙️ gear (top-right) → <strong>See all settings</strong>.</li>
+      <li>Stay on the <strong>General</strong> tab and scroll to <strong>Signature</strong>.</li>
+      <li>Click <strong>+ Create new</strong>, give it a name (e.g. "Tempo"), then click into the editor box.</li>
+      <li>Paste with <code>⌘ + V</code> (Mac) or <code>Ctrl + V</code> (Windows). The logo, fonts, and links should appear.</li>
+      <li>Under <strong>Signature defaults</strong>, use the two dropdowns to assign the signature to your address — select <strong>Tempo</strong> for both <em>For new emails use</em> and <em>On reply/forward use</em>. If you have multiple addresses, repeat for each one.</li>
+      <li>Tick the checkbox <strong>"Insert signature before the quoted text in replies, and remove the '--' line that precedes it."</strong></li>
+      <li>Scroll to the bottom of the page and click <strong>Save Changes</strong>.</li>
+      <li>Compose a test email to yourself to confirm it looks right.</li>
+    </ol>
+    <p class="hint">
+      LinkedIn link: enter your personal LinkedIn profile URL in the form above — it will be included directly in the signature.
+    </p>
+  </section>
+
+</div>
+
+<script>
+  // --- Live preview wiring ---
+  const $ = (id) => document.getElementById(id);
+  const fName     = $("f-name");
+  const fTitle    = $("f-title");
+  const fEmail    = $("f-email");
+  const fPhone    = $("f-phone");
+  const fLinkedin = $("f-linkedin");
+
+  const sName    = $("sig-name");
+  const sTitle   = $("sig-title");
+  const sEmail   = $("sig-email");
+  const sPhoneR  = $("sig-phone-row");
+  const sEmailR  = $("sig-email-row");
+  const sLinkedin = $("sig-linkedin");
+
+  function render() {
+    // Show placeholder text (greyed) when field is empty
+    const nameVal = fName.value.trim();
+    sName.textContent  = nameVal  || fName.placeholder;
+    sName.style.color  = nameVal  ? "#000000" : "#9CA3AF";
+
+    const titleVal = fTitle.value.trim();
+    sTitle.textContent = titleVal || fTitle.placeholder;
+    sTitle.style.color = titleVal ? "#111111" : "#9CA3AF";
+
+    const emailVal = fEmail.value.trim();
+    if (emailVal) {
+      sEmail.textContent = emailVal;
+      sEmail.style.color = "#111111";
+      sEmailR.style.display = "";
+    } else {
+      sEmail.textContent = fEmail.placeholder;
+      sEmail.style.color = "#9CA3AF";
+      sEmailR.style.display = "";
+    }
+
+    const phoneVal = fPhone.value.trim();
+    sPhoneR.textContent = phoneVal || fPhone.placeholder;
+    sPhoneR.style.color = phoneVal ? "#111111" : "#9CA3AF";
+    sPhoneR.style.display = "";
+
+    const linkedinVal = fLinkedin.value.trim();
+    const sLinkedinSep = $("sig-linkedin-sep");
+    if (linkedinVal) {
+      sLinkedin.href = linkedinVal;
+      sLinkedin.style.display = "";
+      if (sLinkedinSep) sLinkedinSep.style.display = "";
+    } else {
+      // Hide LinkedIn link if no URL entered
+      sLinkedin.style.display = "none";
+      if (sLinkedinSep) sLinkedinSep.style.display = "none";
+    }
+
+    // Mirror the canonical signature into the dark-mode preview.
+    // (Only #signature gets copied; the dark preview is visual-only.)
+    const darkHost = document.getElementById("signature-dark-preview");
+    if (darkHost) {
+      darkHost.innerHTML = document.getElementById("signature").innerHTML;
+      // Strip id attributes on the clone so we don't duplicate IDs in the DOM.
+      darkHost.querySelectorAll("[id]").forEach(el => el.removeAttribute("id"));
+    }
+  }
+
+  [fName, fTitle, fEmail, fPhone, fLinkedin].forEach(el => el.addEventListener("input", render));
+  render();
+
+  // --- Input validation (soft warnings on blur) ---
+  function setWarning(input, warnEl, condition) {
+    if (condition) {
+      input.classList.add("warn");
+      warnEl.classList.add("show");
+    } else {
+      input.classList.remove("warn");
+      warnEl.classList.remove("show");
+    }
+  }
+
+  fName.addEventListener("blur", () => {
+    const v = fName.value.trim();
+    // Warn if looks like a single word (no space = probably not a full name)
+    setWarning(fName, $("warn-name"), v.length > 0 && !v.includes(" "));
+  });
+  fName.addEventListener("focus", () => { fName.classList.remove("warn"); $("warn-name").classList.remove("show"); });
+
+  fTitle.addEventListener("blur", () => {
+    const v = fTitle.value.trim();
+    // Warn if very short (1–2 chars) — likely a typo
+    setWarning(fTitle, $("warn-title"), v.length > 0 && v.length < 3);
+  });
+  fTitle.addEventListener("focus", () => { fTitle.classList.remove("warn"); $("warn-title").classList.remove("show"); });
+
+  fEmail.addEventListener("blur", () => {
+    const v = fEmail.value.trim();
+    // Warn if filled but doesn't look like a valid @tempo.ooo address
+    const looksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    const isTempo = v.toLowerCase().endsWith("@tempo.ooo");
+    setWarning(fEmail, $("warn-email"), v.length > 0 && (!looksValid || !isTempo));
+  });
+  fEmail.addEventListener("focus", () => { fEmail.classList.remove("warn"); $("warn-email").classList.remove("show"); });
+
+  fPhone.addEventListener("blur", () => {
+    const v = fPhone.value.trim();
+    // Require international format: must start with + followed by digits (spaces/dashes ok)
+    const isInternational = /^\+\d[\d\s\-]{5,}$/.test(v);
+    setWarning(fPhone, $("warn-phone"), v.length > 0 && !isInternational);
+  });
+  fPhone.addEventListener("focus", () => { fPhone.classList.remove("warn"); $("warn-phone").classList.remove("show"); });
+
+  fLinkedin.addEventListener("blur", () => {
+    const v = fLinkedin.value.trim();
+    // Warn if filled but doesn't look like a linkedin.com URL
+    setWarning(fLinkedin, $("warn-linkedin"), v.length > 0 && !v.includes("linkedin.com/"));
+  });
+  fLinkedin.addEventListener("focus", () => { fLinkedin.classList.remove("warn"); $("warn-linkedin").classList.remove("show"); });
+
+  // --- Copy helpers ---
+  const status = $("status");
+  function flashStatus(msg) {
+    status.textContent = msg;
+    status.classList.add("show");
+    clearTimeout(flashStatus._t);
+    flashStatus._t = setTimeout(() => status.classList.remove("show"), 2200);
+  }
+
+  // Copy the rendered signature as rich HTML (what Gmail wants)
+  $("btn-copy").addEventListener("click", async () => {
+    const node = $("signature");
+    try {
+      // Modern path: write HTML + plaintext to clipboard
+      const html = node.innerHTML;
+      const text = node.innerText;
+      if (navigator.clipboard && window.ClipboardItem) {
+        const item = new ClipboardItem({
+          "text/html":  new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([text], { type: "text/plain" })
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        // Fallback: select the node and execCommand('copy')
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand("copy");
+        sel.removeAllRanges();
+      }
+      flashStatus("✔ Copied — now paste it into Gmail");
+    } catch (err) {
+      console.error(err);
+      flashStatus("⚠ Couldn't copy automatically — select the preview above and press Ctrl/⌘+C");
+    }
+  });
+
+  // Copy the raw HTML source (useful for debugging or email tooling)
+  $("btn-copy-html").addEventListener("click", async () => {
+    const html = $("signature").innerHTML;
+    try {
+      await navigator.clipboard.writeText(html);
+      flashStatus("✔ HTML source copied");
+    } catch (e) {
+      flashStatus("⚠ Couldn't copy HTML");
+    }
+  });
+</script>
+</body>
+</html>
